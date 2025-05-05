@@ -1,8 +1,7 @@
 import os
-import schedule
-import time
-import logging
 import asyncio
+import schedule
+import logging
 from telegram import Bot
 from telegram.ext import Application, CommandHandler
 import google.generativeai as genai
@@ -21,7 +20,7 @@ TELEGRAM_TOKEN = "7756361019:AAFxObOlgZzXvDDZIRPPiAEETHv3qTT3LE0"
 app = Application.builder().token(TELEGRAM_TOKEN).build()
 
 # Функция для генерации текста с помощью google-generativeai
-def generate_post_text():
+async def generate_post_text():
     try:
         model = genai.GenerativeModel("gemini-1.5-pro")
         prompt = (
@@ -48,15 +47,12 @@ def create_image(text):
     try:
         img = Image.new('RGB', (512, 512), color='lightblue')
         draw = ImageDraw.Draw(img)
-        # Пробуем загрузить шрифт, если он есть, иначе используем дефолтный
         try:
             font = ImageFont.truetype("arial.ttf", 20)
         except Exception:
             font = ImageFont.load_default()
             logging.warning("Шрифт arial.ttf не найден, используется стандартный шрифт.")
-        # Ограничиваем длину текста для изображения
         draw.text((10, 10), text[:100], fill='black', font=font)
-        # Сохраняем изображение в буфер
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         buffer.seek(0)
@@ -70,11 +66,10 @@ def create_image(text):
 async def post_to_channel():
     try:
         bot = Bot(TELEGRAM_TOKEN)
-        text = generate_post_text()
+        text = await generate_post_text()
         image = create_image(text)
         if image is None:
             raise Exception("Не удалось создать изображение для поста.")
-        # Отправляем пост с картинкой в канал
         await bot.send_photo(
             chat_id="@Биохакинг",
             photo=image,
@@ -86,28 +81,29 @@ async def post_to_channel():
 
 # Асинхронная команда /start для проверки бота
 async def start(update, context):
-    await update.message.reply_text("Бот запущен! Я буду публиковать посты в канал по расписанию.")
+    await update.message.reply_text("Бот запущен! Я буду публиковать посты в канал каждые 30 минут.")
 
 # Добавляем команду в бота
 app.add_handler(CommandHandler("start", start))
 
-# Функция для запуска асинхронного постинга по расписанию
+# Функция для настройки расписания
 def schedule_posts():
-    loop = asyncio.get_event_loop()
-    schedule.every(2).hours.do(lambda: loop.create_task(post_to_channel()))
+    schedule.every(30).minutes.do(lambda: asyncio.create_task(post_to_channel()))
 
-# Основная функция
-def main():
-    logging.info("Запуск бота...")
-    # Запускаем бота
-    app.run_polling()
-    # Настраиваем расписание
-    schedule_posts()
-    # Запускаем цикл для проверки расписания
+# Асинхронная функция для запуска расписания
+async def run_schedule():
     while True:
         schedule.run_pending()
-        time.sleep(60)  # Проверяем расписание каждую минуту
+        await asyncio.sleep(60)
+
+# Основная функция
+async def main():
+    logging.info("Запуск бота...")
+    schedule_posts()
+    await asyncio.gather(
+        app.run_polling(),
+        run_schedule()
+    )
 
 if __name__ == "__main__":
-    # Запускаем бота в асинхронном режиме
     asyncio.run(main())
