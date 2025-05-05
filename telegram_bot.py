@@ -6,76 +6,60 @@ from telegram import Bot
 from telegram.ext import Application, CommandHandler
 import google.generativeai as genai
 
-# РќР°СЃС‚СЂРѕР№РєР° Р»РѕРіРёСЂРѕРІР°РЅРёСЏ
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# РќР°СЃС‚СЂРѕР№РєР° API РєР»СЋС‡РµР№
 os.environ["GOOGLE_API_KEY"] = "AIzaSyAAyat3z2cg76y4MIJYyH1ejmyyo5Vn7kE"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 TELEGRAM_TOKEN = "7756361019:AAFxObOlgZzXvDDZIRPPiAEETHv3qTT3LE0"
 
-# РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Telegram Р±РѕС‚Р°
 app = Application.builder().token(TELEGRAM_TOKEN).build()
 
-# Р¤СѓРЅРєС†РёСЏ РґР»СЏ РіРµРЅРµСЂР°С†РёРё С‚РµРєСЃС‚Р° СЃ РїРѕРјРѕС‰СЊСЋ google-generativeai
 async def generate_post_text():
     try:
         model = genai.GenerativeModel("gemini-1.5-pro")
         prompt = (
-            "РЎРіРµРЅРµСЂРёСЂСѓР№ С‚РµРєСЃС‚ РґР»СЏ РїРѕСЃС‚Р° РІ Telegram. "
-            "РўРµРєСЃС‚ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РіСЂР°РјРѕС‚РЅС‹Рј, Р»РµРіРєРѕ С‡РёС‚Р°РµРјС‹Рј Рё РёРЅС‚РµСЂРµСЃРЅС‹Рј РґР»СЏ Р°СѓРґРёС‚РѕСЂРёРё. "
-            "Р”РѕР±Р°РІСЊ СЂРµР»РµРІР°РЅС‚РЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ, С„Р°РєС‚ РёР»Рё РєРѕСЂРѕС‚РєСѓСЋ РёСЃС‚РѕСЂРёСЋ. "
-            "РСЃРїРѕР»СЊР·СѓР№ Р°Р±Р·Р°С†С‹ РёР»Рё СЌРјРѕРґР·Рё РґР»СЏ СѓР»СѓС‡С€РµРЅРёСЏ С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёСЏ Рё РІРѕРІР»РµС‡РµРЅРёСЏ. "
-            "Р—Р°РєРѕРЅС‡Рё РїСЂРёР·С‹РІРѕРј Рє РґРµР№СЃС‚РІРёСЋ РёР»Рё РІРѕРїСЂРѕСЃРѕРј, С‡С‚РѕР±С‹ СЃС‚РёРјСѓР»РёСЂРѕРІР°С‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёРё "
-            '(РЅР°РїСЂРёРјРµСЂ, "Р§С‚Рѕ РІС‹ РґСѓРјР°РµС‚Рµ?", "РџРѕРґРµР»РёС‚РµСЃСЊ СЃРІРѕРёРј РјРЅРµРЅРёРµРј"). '
-            "Р”Р»РёРЅР° С‚РµРєСЃС‚Р° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РѕРїС‚РёРјР°Р»СЊРЅРѕР№ РґР»СЏ С‡С‚РµРЅРёСЏ РІ Р»РµРЅС‚Рµ Telegram (РЅРµ СЃР»РёС€РєРѕРј РґР»РёРЅРЅРѕР№). "
-            "РР·Р±РµРіР°Р№ РѕРїРµС‡Р°С‚РѕРє Рё РіСЂР°РјРјР°С‚РёС‡РµСЃРєРёС… РѕС€РёР±РѕРє."
+            "Сгенерируй текст для поста в Telegram. "
+            "Текст должен быть грамотным, легко читаемым и интересным для аудитории. "
+            "Добавь релевантную информацию, факт или короткую историю. "
+            "Используй абзацы или эмодзи для улучшения форматирования и вовлечения. "
+            "Закончи призывом к действию или вопросом, чтобы стимулировать комментарии "
+            '(например, "Что вы думаете?", "Поделитесь своим мнением"). '
+            "Длина текста должна быть оптимальной для чтения в ленте Telegram. "
+            "Избегай опечаток."
         )
         response = model.generate_content(prompt)
-        logging.info("РўРµРєСЃС‚ РїРѕСЃС‚Р° СѓСЃРїРµС€РЅРѕ СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅ.")
+        logging.info("Текст поста успешно сгенерирован.")
         return response.text
     except Exception as e:
-        logging.error(f"РћС€РёР±РєР° РіРµРЅРµСЂР°С†РёРё С‚РµРєСЃС‚Р°: {str(e)}")
-        return f"РћС€РёР±РєР° РіРµРЅРµСЂР°С†РёРё С‚РµРєСЃС‚Р°: {str(e)}"
+        logging.error(f"Ошибка генерации текста: {str(e)}")
+        return f"Ошибка: {str(e)}"
 
-# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РѕС‚РїСЂР°РІРєРё РїРѕСЃС‚Р° РІ РєР°РЅР°Р»
 async def post_to_channel():
     try:
         bot = Bot(TELEGRAM_TOKEN)
         text = await generate_post_text()
-        await bot.send_message(
-            chat_id="@Р‘РёРѕС…Р°РєРёРЅРі",
-            text=text
-        )
-        logging.info("РџРѕСЃС‚ СѓСЃРїРµС€РЅРѕ РѕРїСѓР±Р»РёРєРѕРІР°РЅ РІ РєР°РЅР°Р» @Р‘РёРѕС…Р°РєРёРЅРі.")
+        await bot.send_message(chat_id="@Биохакинг", text=text)
+        logging.info("Пост опубликован в @Биохакинг.")
     except Exception as e:
-        logging.error(f"РћС€РёР±РєР° РїСЂРё РїСѓР±Р»РёРєР°С†РёРё РїРѕСЃС‚Р°: {str(e)}")
+        logging.error(f"Ошибка при публикации: {str(e)}")
 
-# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ РєРѕРјР°РЅРґР° /start РґР»СЏ РїСЂРѕРІРµСЂРєРё Р±РѕС‚Р°
 async def start(update, context):
-    await update.message.reply_text("Р‘РѕС‚ Р·Р°РїСѓС‰РµРЅ! РЇ Р±СѓРґСѓ РїСѓР±Р»РёРєРѕРІР°С‚СЊ РїРѕСЃС‚С‹ РІ РєР°РЅР°Р» РєР°Р¶РґС‹Рµ 30 РјРёРЅСѓС‚.")
+    await update.message.reply_text("Бот запущен! Публикую посты каждые 30 минут.")
 
-# Р”РѕР±Р°РІР»СЏРµРј РєРѕРјР°РЅРґСѓ РІ Р±РѕС‚Р°
 app.add_handler(CommandHandler("start", start))
 
-# Р¤СѓРЅРєС†РёСЏ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё СЂР°СЃРїРёСЃР°РЅРёСЏ
 def schedule_posts():
     schedule.every(30).minutes.do(lambda: asyncio.create_task(post_to_channel()))
 
-# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ Р·Р°РїСѓСЃРєР° СЂР°СЃРїРёСЃР°РЅРёСЏ
 async def run_schedule():
     while True:
         schedule.run_pending()
         await asyncio.sleep(60)
 
-# РћСЃРЅРѕРІРЅР°СЏ С„СѓРЅРєС†РёСЏ
 async def main():
-    logging.info("Р—Р°РїСѓСЃРє Р±РѕС‚Р°...")
+    logging.info("Запуск бота...")
     schedule_posts()
-    await asyncio.gather(
-        app.run_polling(),
-        run_schedule()
-    )
+    await asyncio.gather(app.run_polling(), run_schedule())
 
 if __name__ == "__main__":
     asyncio.run(main())
