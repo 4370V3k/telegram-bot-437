@@ -5,8 +5,6 @@ import logging
 from telegram import Bot
 from telegram.ext import Application, CommandHandler
 import google.generativeai as genai
-from PIL import Image, ImageDraw, ImageFont
-import io
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,14 +22,12 @@ async def generate_post_text():
     try:
         model = genai.GenerativeModel("gemini-1.5-pro")
         prompt = (
-            "Сгенерируй текст для поста в Telegram, который будет сопровождать изображение. "
+            "Сгенерируй текст для поста в Telegram. "
             "Текст должен быть грамотным, легко читаемым и интересным для аудитории. "
-            "Опиши содержание или тему изображения в первых предложениях. "
-            "Добавь релевантную информацию, факт или короткую историю, связанную с изображением. "
+            "Добавь релевантную информацию, факт или короткую историю. "
             "Используй абзацы или эмодзи для улучшения форматирования и вовлечения. "
             "Закончи призывом к действию или вопросом, чтобы стимулировать комментарии "
             '(например, "Что вы думаете?", "Поделитесь своим мнением"). '
-            "Убедись, что текст органично дополняет визуальный контент (изображение). "
             "Длина текста должна быть оптимальной для чтения в ленте Telegram (не слишком длинной). "
             "Избегай опечаток и грамматических ошибок."
         )
@@ -42,38 +38,14 @@ async def generate_post_text():
         logging.error(f"Ошибка генерации текста: {str(e)}")
         return f"Ошибка генерации текста: {str(e)}"
 
-# Функция для создания простой картинки с текстом
-def create_image(text):
-    try:
-        img = Image.new('RGB', (512, 512), color='lightblue')
-        draw = ImageDraw.Draw(img)
-        try:
-            font = ImageFont.truetype("arial.ttf", 20)
-        except Exception:
-            font = ImageFont.load_default()
-            logging.warning("Шрифт arial.ttf не найден, используется стандартный шрифт.")
-        draw.text((10, 10), text[:100], fill='black', font=font)
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
-        logging.info("Картинка успешно создана.")
-        return buffer
-    except Exception as e:
-        logging.error(f"Ошибка создания картинки: {str(e)}")
-        return None
-
 # Асинхронная функция для отправки поста в канал
 async def post_to_channel():
     try:
         bot = Bot(TELEGRAM_TOKEN)
         text = await generate_post_text()
-        image = create_image(text)
-        if image is None:
-            raise Exception("Не удалось создать изображение для поста.")
-        await bot.send_photo(
+        await bot.send_message(
             chat_id="@Биохакинг",
-            photo=image,
-            caption=text
+            text=text
         )
         logging.info("Пост успешно опубликован в канал @Биохакинг.")
     except Exception as e:
